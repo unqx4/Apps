@@ -310,55 +310,48 @@
         })
       }
 
-      // Matrix-style falling characters — faint red and blue columns, slow and diffused
+      // Matrix-style falling characters (red tones)
       ;(function matrix() {
         const canvas = document.getElementById('matrixCanvas')
         if (!canvas) return
         const ctx = canvas.getContext('2d')
-        let w = 0, h = 0, fontSize = 12, cols = 0, drops = []
-        const chars = '0123456789'
+        let width = canvas.width = window.innerWidth
+        let height = canvas.height = window.innerHeight
+        const chars = '01'.concat('abcdefghijklmnopqrstuvwxyz0123456789')
+        const fontSize = Math.max(12, Math.floor(width / 80))
+        const columns = Math.floor(width / fontSize)
+        const drops = new Array(columns).fill(1)
 
         function resize() {
-          w = canvas.width = window.innerWidth
-          h = canvas.height = window.innerHeight
-          fontSize = Math.max(10, Math.floor(w / 140))
-          cols = Math.floor(w / fontSize)
-          const rows = Math.max(1, Math.floor(h / fontSize))
-          // initialize drops so many are already somewhere on-screen
-          drops = new Array(cols).fill(0).map(() => Math.floor(Math.random() * rows))
+          width = canvas.width = window.innerWidth
+          height = canvas.height = window.innerHeight
         }
-
         window.addEventListener('resize', resize)
-        resize()
 
         function draw() {
-          // very light fade to create long subtle trails
-          ctx.fillStyle = 'rgba(0,0,0,0.06)'
-          ctx.fillRect(0, 0, w, h)
+          // semi-transparent dark overlay to create trailing effect
+          ctx.fillStyle = 'rgba(10,0,0,0.12)'
+          ctx.fillRect(0, 0, width, height)
 
           ctx.font = `${fontSize}px monospace`
-          ctx.textBaseline = 'top'
-          ctx.shadowBlur = 2
-          for (let i = 0; i < cols; i++) {
+          for (let i = 0; i < drops.length; i++) {
+            const text = chars.charAt(Math.floor(Math.random() * chars.length))
             const x = i * fontSize
-            const y = Math.floor(drops[i]) * fontSize
-            const ch = chars.charAt(Math.floor(Math.random() * chars.length))
-            const isBlue = (i % 8) < 4
-            const color = isBlue ? 'rgba(84,140,196,0.16)' : 'rgba(196,58,58,0.16)'
-            ctx.fillStyle = color
-            ctx.shadowColor = color
-            ctx.fillText(ch, x, y)
-            // faster fall
-            drops[i] += Math.random() * 2.2 + 1.0
-            // reset to start above the canvas so it only falls from top
-            if (drops[i] * fontSize > h + 50) drops[i] = Math.floor(Math.random() * 20)
+            const y = drops[i] * fontSize
+            // red gradient for characters
+            const grad = ctx.createLinearGradient(0, y - fontSize, 0, y)
+            grad.addColorStop(0, '#ff6b6b')
+            grad.addColorStop(1, '#c43a3a')
+            ctx.fillStyle = grad
+            ctx.fillText(text, x, y)
+            if (y > height && Math.random() > 0.975) drops[i] = 0
+            drops[i]++
           }
           requestAnimationFrame(draw)
         }
-
-        // subtle dark base so faint chars show against background
-        ctx.fillStyle = 'rgba(0,0,0,0.6)'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        // initialize canvas background
+        ctx.fillStyle = 'rgba(10,0,0,0.6)'
+        ctx.fillRect(0, 0, width, height)
         draw()
       })()
     </script>
